@@ -39,21 +39,35 @@ namespace marvin
 class MarvinHardware : public hardware_interface::SystemInterface
 {
 
-struct Config
+struct Config 
 {
-  std::string left_wheel_name = "";
-  std::string right_wheel_name = "";
-  float loop_rate = 0.0;
-  std::string device = "";
-  int baud_rate = 0;
-  int timeout_ms = 0;
-  int enc_counts_per_rev = 0;
-  int pid_p = 0;
-  int pid_d = 0;
-  int pid_i = 0;
-  int pid_o = 0;
-};
+  int use_MDUI;
+  int nIDPC;
+  int nIDMDUI;
+  int nIDMDT;
+  int nBaudrate;
+  int nDiameter;
+  double wheel_radius;
+  double nWheelLength;
+  int nRMID;
+  int nGearRatio;
+  int reverse_direction;
+  int motor_position_type;
+  int encoder_PPR;
+  int nMaxRPM;
+  int position_proportion_gain;
+  int speed_proportion_gain;
+  int integral_gain;
+  int nSlowstart;
+  int nSlowdown;
+  int motor_pole;
+  // int motor_count;
+  // double motor_count_per_degree;
 
+  uint16_t sSetDia;
+  uint16_t sSetWheelLen;
+  uint16_t sSetGear;
+}
 
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(MarvinHardware);
