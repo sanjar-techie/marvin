@@ -61,13 +61,12 @@ struct Config
   int nSlowstart;
   int nSlowdown;
   int motor_pole;
-  // int motor_count;
-  // double motor_count_per_degree;
-
+  std::string device;
+  int timeout_ms;
   uint16_t sSetDia;
   uint16_t sSetWheelLen;
   uint16_t sSetGear;
-}
+};
 
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(MarvinHardware);
@@ -109,9 +108,13 @@ public:
 private:
 
   SerialPort comms_; // to be changed
-  Config cfg_;
-//   Wheel wheel_l_;
-//   Wheel wheel_r_;
+  Config robotParamData;
+
+  // Store the commands 
+  std::vector<double> hw_commands_;
+  std::vector<double> hw_positions_;
+  std::vector<double> hw_velocities_;
+
 };
 
 }  // namespace marvin
