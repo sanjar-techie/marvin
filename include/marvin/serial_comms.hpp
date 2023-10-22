@@ -5,7 +5,8 @@
 #include <string>
 #include <libserial/SerialPort.h>
 
-#include "rclcpp/rclcpp.hpp"
+// #include "rclcpp/rclcpp.hpp"
+#include "marvin/hardware_interface.hpp"
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
 {
@@ -52,7 +53,7 @@ public:
     timeout_ms_ = timeout_ms;
     serial.Open(port.c_str());
     serial.SetBaudRate(convert_baud_rate(baud_rate));
-    init_encoder = get_encoder_value();
+    // init_encoder = get_encoder_value();
   }
 
   void disconnect() {
@@ -84,42 +85,32 @@ public:
     return response;
   }
 
-  std::tuple<int, int, int, int> get_encoder_value() {
-    std::stringstream ss;
-    ss << "?C 1_?C 2_?S 1_?S 2" << char(0x0d);
-    send_msg(ss.str());
+  void read_encoder_values(int &val_1, int &val_2){
+    // Request main data from the controller
+    PutMdData(REQUEST_PNT_MAIN_DATA, MID_MDUI, NULL, 0);
 
-    const auto q1 = read_msg();
-    const auto r1 = read_msg();
-    const auto q2 = read_msg();
-    const auto r2 = read_msg();
-    const auto q3 = read_msg();
-    const auto r3 = read_msg();
-    const auto q4 = read_msg();
-    const auto r4 = read_msg();
+    // Receive and process data from the controller
+    ReceiveDataFromController();
 
-    try
-    {  
-      const auto [e1, e2, s1, s2] = init_encoder;
-      const int encoder_1 = std::stoi(split(r1, '=').back()) - e1;
-      const int encoder_2 = std::stoi(split(r2, '=').back()) - e2;
-      const int speed_1 = std::stoi(split(r3, '=').back()) - s1;
-      const int speed_2 = std::stoi(split(r4, '=').back()) - s2;
-      return {encoder_1, encoder_2, speed_1, speed_2};
-    }
-    catch(const std::exception& e)
-    {
-      return {-1, -1, -1, -1}; // todo 
-    }
+    // Assuming the received data is stored in a global variable of type PID_PNT_MAIN_DATA_t
+    extern PID_PNT_MAIN_DATA_t received_data;
+
+    // Get the motor positions
+    val_1 = received_data.mtr_pos_id1;
+    val_2 = received_data.mtr_pos_id2;
   }
 
   // -1000 ~ 1000 %
-  bool set_motor_value(int v1, int v2) {
-    std::stringstream ss;
-    ss << "!G 1 "<< v1 << "_!G 2 " << v2 << char(0x0d);
-    send_msg(ss.str());
-    auto response = read_msg();
-    return true;
+  void set_motor_values(int val_1, int val_2){
+    PID_PNT_VEL_CMD_t motor_values;
+    motor_values.enable_id1 = 1; // Assuming motor 1 is always enabled
+    motor_values.rpm_id1 = val_1; // Set RPM for motor 1
+    motor_values.enable_id2 = 1; // Assuming motor 2 is always enabled
+    motor_values.rpm_id2 = val_2; // Set RPM for motor 2
+    motor_values.req_monitor_id = 0; // Assuming no monitor request
+
+    // Send the motor values to the controller
+    PutMdData(PID_PNT_VEL_CMD, MID_MDUI, (uint8_t*)&motor_values, sizeof(motor_values));
   }
 
   void set_max_motor_rpm(int v1, int v2) {
